@@ -1,4 +1,4 @@
-// Better to assert all
+// Better to assert all sizes
 
 typedef short int i16;
 typedef int i32;
@@ -12,3 +12,6 @@ typedef float f32;
 typedef double f64;
 typedef long double f128;
 
+struct Color {
+    f32 r, g, b, a;
+};
