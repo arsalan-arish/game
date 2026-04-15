@@ -1,1 +1,2 @@
-g++ "practice/triangle/triangle.cpp" "glad/lib/glad.obj" -o "practice/triangle/triangle.exe" -I. -L "glfw/lib-mingw-w64" -l "glfw3dll" -I "glad\include" -I "glfw/include"
+g++ "practice/triangle/triangle.cpp" -o "glfw/lib-mingw-w64/triangle.exe" -I.  -I "glad/include" -I "glfw/include" -L "glfw/lib-mingw-w64" -l "glfw3dll" -L "glad/lib" -l "glad"
+./"glfw/lib-mingw-w64/triangle.exe"

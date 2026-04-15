@@ -15,3 +15,8 @@ typedef long double f128;
 struct Color {
     f32 r, g, b, a;
 };
+
+typedef struct {
+    u32 vao;
+    u32 vbo;
+} Box;

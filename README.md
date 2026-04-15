@@ -7,5 +7,3 @@ For Graphics Rendering, I will use OpenGL Graphics API, GPU-based rendering. It 
 Other game logic will be written in C++.
 
 # Design
-
-There are 3 classes; Game, Window, Graphics. All of 
