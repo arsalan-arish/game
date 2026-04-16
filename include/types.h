@@ -16,7 +16,8 @@ struct Color {
     f32 r, g, b, a;
 };
 
-typedef struct {
+template <int numberOfBuffers>
+struct Box {
     u32 vao;
-    u32 vbo;
-} Box;
+    u32 bufferObjects[numberOfBuffers];
+};

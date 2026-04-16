@@ -1,2 +1,2 @@
-g++ "practice/cube/cube.cpp" -o "glfw/lib-mingw-w64/cube.exe" -I.  -I "glad/include" -I "glfw/include" -I "include" -L "glfw/lib-mingw-w64" -l "glfw3dll" -L "glad/lib" -l "glad" -Werror
+g++ "practice/cube/cube.cpp" -o "glfw/lib-mingw-w64/cube.exe" -I "glad/include" -I "glfw/include" -I "include" -L "glfw/lib-mingw-w64" -l "glfw3dll" -L "glad/lib" -l "glad" -Werror
 ./"glfw/lib-mingw-w64/cube.exe"
