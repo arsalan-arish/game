@@ -1,2 +1,2 @@
-g++ "practice/triangle/triangle.cpp" -o "glfw/lib-mingw-w64/triangle.exe" -I.  -I "glad/include" -I "glfw/include" -L "glfw/lib-mingw-w64" -l "glfw3dll" -L "glad/lib" -l "glad"
+g++ "practice/triangle/triangle.cpp" -o "glfw/lib-mingw-w64/triangle.exe" -I "glad/include" -I "glfw/include" -I "include" -L "glfw/lib-mingw-w64" -l "glfw3dll" -L "glad/lib" -l "glad" -Werror
 ./"glfw/lib-mingw-w64/triangle.exe"

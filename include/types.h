@@ -1,3 +1,4 @@
+#include <vector>
 // Better to assert all sizes
 
 typedef short int i16;
@@ -16,8 +17,7 @@ struct Color {
     f32 r, g, b, a;
 };
 
-template <int numberOfBuffers>
 struct Box {
     u32 vao;
-    u32 bufferObjects[numberOfBuffers];
+    std::vector<u32> bufferObjects;
 };
