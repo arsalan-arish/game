@@ -18,3 +18,11 @@ Other game logic will be written in C++.
 17th April 2026
 
 <img src="screenshots/interpolated_triangle.png" alt="interpolated_triangle">
+
+17th April 2026
+
+<img src="screenshots/square.png" alt="square">
+
+17th April 2026
+
+<video src="screenshots/cube.mp4" autoplay muted loop></video>

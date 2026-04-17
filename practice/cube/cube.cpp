@@ -5,6 +5,12 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <cmath>
+#include <chrono>
+
+using std::cosf;
+using std::sinf;
+using std::tanf;
 
 #define BLACK 0.0f, 0.0f, 0.0f, 1.0f
 #define RED 1.0f,  0.0f, 0.0f, 1.0f
@@ -30,7 +36,7 @@ GLFWwindow* init(u16 width, u16 height, const char* title) {
     return window;
 }
 
-void checkForErrors(u32 vertexShader, u32 fragmentShader, u32 shaderProgram) {
+void checkShaderErrors(u32 vertexShader, u32 fragmentShader, u32 shaderProgram) {
 
     int success;
     char infoLog[512];
@@ -55,6 +61,7 @@ void checkForErrors(u32 vertexShader, u32 fragmentShader, u32 shaderProgram) {
     if (!success) {
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
         printf("SHADER_PROGRAM::LINKING_FAILED\n%s", infoLog);
+        exit(1);
     } else {
         printf("SHADER_PROGRAM --> Compiled successfully\n");
     }
@@ -84,7 +91,7 @@ u32 createShaderProgram() {
     glAttachShader(program, fragShader);
     glLinkProgram(program);
 
-    checkForErrors(vertShader, fragShader, program);
+    checkShaderErrors(vertShader, fragShader, program);
 
     glDeleteShader(vertShader);
     glDeleteShader(fragShader);
@@ -130,9 +137,53 @@ void drawCubes(u32 shaderProgram, Box b, u32 amountOfCubes, bool indexed) {
     } else {
         glDrawArrays(GL_TRIANGLES, 0, 12 * 3 * amountOfCubes);
     }
-    
 }
 
+void setTransformMatrix(u32 shaderProgram, f32 deltaTime) {
+    //* Order => Scaling - Rotation - Translation - Projection
+    i32 TransformHandle = glGetUniformLocation(shaderProgram, "Transform");
+    if (TransformHandle == -1) {printf("Error getting uniform location of 'Transform'"); exit(1);}
+
+    
+    Matrix4f ScalingMatrix(
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    );
+
+
+    Matrix4f TranslationMatrix(
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 3.0f,
+        0, 0, 0, 1
+    );
+
+
+    static f32 angle = toRadian(0.0f);
+    angle += 1.5f * deltaTime; // 1.5 radians per second
+    Matrix4f RotationMatrix(
+        cosf(angle), 0, -sinf(angle), 0,
+        0, 1, 0, 0,
+        sinf(angle), 0, cosf(angle), 0,
+        0, 0, 0, 1
+    );
+
+
+    static f32 FOV = toRadian(90.0f);
+    static f32 tanHalfFOV = tanf(FOV / 2.0f);
+    static f32 f = 1 / tanHalfFOV;
+    Matrix4f ProjectionMatrix(
+        f, 0, 0, 0,
+        0, f, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 1, 0
+    );
+
+    Matrix4f TransformMatrix = ProjectionMatrix * TranslationMatrix * RotationMatrix * ScalingMatrix;
+    glUniformMatrix4fv(TransformHandle, 1, true, &TransformMatrix.m[0][0]);
+}
 
 int main()
 {
@@ -148,7 +199,7 @@ int main()
         -0.5f, -0.5f, -0.5f, 1.0f,
          0.5f,  0.5f, -0.5f, 1.0f,
          0.5f, -0.5f,  0.5f, 1.0f,
-        -0.5f, -0.5f,  0.5f, 1.0f,
+        -0.5f, -0.5f,  0.5f, 1.0f
     };
 
     u32 indices[] = {
@@ -163,7 +214,7 @@ int main()
         5, 0, 6,
         7, 4, 3,
         2, 1, 4,
-        0, 2, 7,
+        0, 2, 7
     };
 
     pushData(box.bufferObjects[0], sizeof(data), data);
@@ -174,9 +225,16 @@ int main()
     glFrontFace(GL_CW);
     glCullFace(GL_BACK);
 
+    auto lastTime = std::chrono::high_resolution_clock::now();
+
     while (!glfwWindowShouldClose(window))
     {
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        f32 deltaTime = std::chrono::duration<f32>(currentTime - lastTime).count();
+        lastTime = currentTime;
+
         clearScreen({BLACK});
+        setTransformMatrix(shaderProgram, deltaTime);
         drawCubes(shaderProgram, box, 1, true);
         glfwSwapBuffers(window);
         glfwPollEvents();
