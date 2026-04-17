@@ -1,0 +1,2 @@
+g++ "practice/projection/projection.cpp" "practice/projection/penger_model.cpp" -o "glfw/lib-mingw-w64/projection.exe" -I "glad/include" -I "glfw/include" -I "include" -L "glfw/lib-mingw-w64" -l "glfw3dll" -L "glad/lib" -l "glad" -Werror
+./"glfw/lib-mingw-w64/projection.exe"

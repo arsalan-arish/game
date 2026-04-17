@@ -1,0 +1,229 @@
+#include <glad/glad.h>
+#include <glfw/glfw3.h>
+#include <cstdio>
+#include <types.h>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <cmath>
+#include <chrono>
+
+using std::cos;
+using std::sin;
+using std::tan;
+using std::acos;
+using std::asin;
+using std::atan2;
+
+#define BLACK 0.0f, 0.0f, 0.0f, 1.0f
+#define RED 1.0f,  0.0f, 0.0f, 1.0f
+#define GREEN 0.0f, 1.0f, 0.0f, 1.0f
+#define BLUE 0.0f, 0.0f, 1.0f, 1.0f
+
+#define WIDTH  600
+#define HEIGHT 600
+
+
+std::string readFile(const char* path) {
+    std::ifstream file(path);
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
+
+GLFWwindow* init(u16 width, u16 height, const char* title) {
+    glfwInit();
+    GLFWwindow* window = glfwCreateWindow(width, height, title, nullptr, nullptr);
+    glfwMakeContextCurrent(window);
+    if (!gladLoadGL()) {
+        printf("Failed to load GL\n");
+        exit(1);
+    }
+    return window;
+}
+
+void checkShaderErrors(u32 vertexShader, u32 fragmentShader, u32 shaderProgram) {
+
+    int success;
+    char infoLog[512];
+
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        printf("VERTEX_SHADER::COMPILATION_FAILED\n%s", infoLog);
+    } else {
+        printf("VERTEX_SHADER --> Compiled successfully\n");
+    }
+
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+        printf("FRAGMENT_SHADER::COMPILATION_FAILED\n%s", infoLog);
+    } else {
+        printf("FRAGMENT_SHADER --> Compiled successfully\n");
+    }
+
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        printf("SHADER_PROGRAM::LINKING_FAILED\n%s", infoLog);
+        exit(1);
+    } else {
+        printf("SHADER_PROGRAM --> Compiled successfully\n");
+    }
+}
+
+u32 createShaderProgram() {
+
+    auto vertSourceStr = readFile("practice/projection/shader.vert");
+    auto fragSourceStr = readFile("practice/projection/shader.frag");
+    
+    const char* vertSources[] = {vertSourceStr.c_str()};
+    const char* fragSources[] = {fragSourceStr.c_str()};
+
+    u32 vertArraySize = sizeof(vertSources) / sizeof(vertSources[0]);
+    u32 fragArraySize = sizeof(fragSources) / sizeof(fragSources[0]);
+
+    u32 vertShader = glCreateShader(GL_VERTEX_SHADER);
+    u32 fragShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vertShader, vertArraySize, vertSources, NULL);
+    glShaderSource(fragShader, fragArraySize, fragSources, NULL);
+    glCompileShader(vertShader);
+    glCompileShader(fragShader);
+
+    u32 program = glCreateProgram();
+    glAttachShader(program, vertShader);
+    glAttachShader(program, fragShader);
+    glLinkProgram(program);
+
+    checkShaderErrors(vertShader, fragShader, program);
+
+    glDeleteShader(vertShader);
+    glDeleteShader(fragShader);
+
+    return program;
+}
+
+void clearScreen(Color c) {
+    glClearColor(c.r, c.g, c.b, c.a);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+Box createBox(int numberOfBuffers) {
+    Box b;
+    glGenVertexArrays(1, &b.vao);
+    b.bufferObjects.resize(numberOfBuffers);
+    glGenBuffers(numberOfBuffers, b.bufferObjects.data());
+    return b;
+}
+
+void pushData(u32 buff, u32 size, void* data) {
+    glBindBuffer(GL_ARRAY_BUFFER, buff);
+    glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+}
+
+void formatData(Box b) {
+    glBindVertexArray(b.vao);
+
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, b.bufferObjects[0]);
+    glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, (void*)0);
+    
+    glBindVertexArray(0);
+}
+
+void drawModel(u32 shaderProgram, Box b, u32 numberOfVertices, bool indexed) {
+    glUseProgram(shaderProgram);
+    glBindVertexArray(b.vao);
+    if (indexed) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, b.bufferObjects[1]);
+        glDrawElements(GL_LINES, numberOfVertices, GL_UNSIGNED_INT, 0);
+    } else {
+        glDrawArrays(GL_TRIANGLES, 0, numberOfVertices);
+    }
+}
+
+void setTransformMatrix(u32 shaderProgram, f32 deltaTime) {
+    i32 TransformHandle = glGetUniformLocation(shaderProgram, "Transform");
+    if (TransformHandle == -1) {printf("Error getting uniform location of 'Transform'"); exit(1);}
+
+    
+    Matrix4f ScalingMatrix(
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    );
+
+
+    Matrix4f TranslationMatrix(
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 1.65f,
+        0, 0, 0, 1
+    );
+
+
+    static f32 angle = toRadian(0.0f);
+    angle += 1.5f * deltaTime; // 1.5 radians per second
+    Matrix4f RotationMatrix(
+        cos(angle),   0,   -sin(angle),   0,
+        0          ,  1,    0         ,   0,
+        sin(angle),   0,   cos(angle) ,   0,
+        0          ,  0,    0        ,    1
+    );
+
+    static f32 ar = WIDTH/HEIGHT;
+    static f32 FOV = toRadian(90.0f);
+    static f32 tanHalfFOV = tanf(FOV / 2.0f);
+    static f32 f = 1 / tanHalfFOV;
+    static f32 NearZ = 1.0f;
+    static f32 FarZ = 10.0f;
+    static f32 zRange = FarZ - NearZ;
+    static f32 A = (- FarZ - NearZ) / zRange;
+    static f32 B = 2.0f * FarZ * NearZ / zRange;
+    Matrix4f ProjectionMatrix(
+        f / ar, 0, 0, 0,
+        0     , f, 0, 0,
+        0     , 0, A, B,
+        0     , 0, 1, 0
+    );
+
+    Matrix4f TransformMatrix = ProjectionMatrix * TranslationMatrix * RotationMatrix * ScalingMatrix;
+    glUniformMatrix4fv(TransformHandle, 1, true, &TransformMatrix.m[0][0]);
+}
+
+int main()
+{
+    auto window = init(WIDTH, HEIGHT, "penger");
+    auto shaderProgram = createShaderProgram();
+    auto box = createBox(2);
+
+    extern f32 data[972];
+    extern f32 indices[1872];
+    pushData(box.bufferObjects[0], sizeof(data), data);
+    pushData(box.bufferObjects[1], sizeof(indices), indices);
+    formatData(box);
+
+    glEnable(GL_CULL_FACE);
+    glFrontFace(GL_CW);
+    glCullFace(GL_BACK);
+
+    glEnable(GL_DEPTH_TEST);
+
+    auto lastTime = std::chrono::high_resolution_clock::now();
+
+    while (!glfwWindowShouldClose(window))
+    {
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        f32 deltaTime = std::chrono::duration<f32>(currentTime - lastTime).count();
+        lastTime = currentTime;
+
+        clearScreen({BLACK});
+        setTransformMatrix(shaderProgram, deltaTime);
+        drawModel(shaderProgram, box, sizeof(indices) / sizeof(f32), true);
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+}

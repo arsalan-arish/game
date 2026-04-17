@@ -24,5 +24,3 @@ Other game logic will be written in C++.
 <img src="screenshots/square.png" alt="square">
 
 17th April 2026
-
-<video src="screenshots/cube.mp4" autoplay muted loop></video>
