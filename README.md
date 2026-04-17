@@ -25,8 +25,8 @@ Other game logic will be written in C++.
 
 17th April 2026
 
-https://github.com/user-attachments/assets/d438140d-f200-43f9-b165-cffde5efd1b7
+https://github.com/user-attachments/assets/b69c054d-5d82-47ac-ae06-5ad275eee091
 
 17th April 2026
 
-https://github.com/user-attachments/assets/b69c054d-5d82-47ac-ae06-5ad275eee091
+https://github.com/user-attachments/assets/d438140d-f200-43f9-b165-cffde5efd1b7
